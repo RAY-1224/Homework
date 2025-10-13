@@ -36,20 +36,84 @@
 
 ```cpp
 #include <iostream>
+#include <stack>   // 非遞迴版會用到 stack
 using namespace std;
 
-int sigma(int n) {
-    if (n < 0)
-        throw "n < 0";
-    else if (n <= 1)
-        return n;
-    return n + sigma(n - 1);
+/*------------------------------------------------------------
+  函式定義：Ackermann’s function A(m, n)
+  
+  數學定義：
+      A(m, n) =
+        n + 1                 , if m = 0
+        A(m - 1, 1)           , if m > 0 and n = 0
+        A(m - 1, A(m, n - 1)) , if m > 0 and n > 0
+------------------------------------------------------------*/
+
+// 🔹 遞迴版 (Recursive Version)
+int AckermannRecursive(int m, int n) {
+    // 基本情況 (base case)：m == 0 時直接回傳 n + 1
+    if (m == 0)
+        return n + 1;
+
+    // 若 m > 0 且 n == 0，呼叫 A(m-1, 1)
+    else if (n == 0)
+        return AckermannRecursive(m - 1, 1);
+
+    // 一般情況：A(m-1, A(m, n-1))
+    else
+        return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
 }
 
-int main() {
-    int result = sigma(3);
-    cout << result << '\n';
+
+// 🔹 非遞迴版 (Non-recursive Version)
+// 目標：用 stack 模擬遞迴呼叫堆疊
+int AckermannNonRecursive(int m, int n) {
+    stack<int> st;        // 用來記錄每次呼叫的 m 值
+    st.push(m);           // 先把初始 m 放進 stack
+
+    while (!st.empty()) {
+        m = st.top();     // 取出最上層的 m
+        st.pop();         // 彈出代表「要處理這層」
+
+        if (m == 0) {
+            n = n + 1;
+        } 
+        else if (n == 0) {
+            st.push(m - 1);  // 把下一層要算的 m 放入 stack
+            n = 1;           // 更新 n 值
+        } 
+        else {
+            // 因為要先算 A(m, n - 1)，再算外層 A(m - 1, ...)
+            st.push(m - 1);  // 外層呼叫 A(m - 1, ...)
+            st.push(m);      // 內層呼叫 A(m, n - 1)
+            n = n - 1;       // 先讓 n - 1，等內層算完再回來
+        }
+    }
+
+    // 當 stack 清空時，n 即為最終結果
+    return n;
 }
+
+
+
+// 🔹 主程式 (Main)
+int main() {
+    int m, n;
+
+    cout << "Ackermann's Function A(m, n)\n";
+    cout << "請輸入 m 與 n（建議 m <= 3, n <= 5）: ";
+    cin >> m >> n;
+
+    cout << "\n=== 遞迴版 Recursive ===\n";
+    cout << "A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << endl;
+
+    cout << "\n=== 非遞迴版 Non-recursive ===\n";
+    cout << "A(" << m << "," << n << ") = " << AckermannNonRecursive(m, n) << endl;
+
+    cout << "\n⚠️ 注意：Ackermann 函數成長極快，請勿輸入太大值！\n";
+    return 0;
+}
+
 ```
 
 ## 效能分析
