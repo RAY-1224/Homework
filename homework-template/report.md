@@ -6,7 +6,7 @@
 
 Problem1:本題要求實作阿克曼函數分別為遞迴跟非遞迴。
 
-Problem2:
+Problem2:本題目要求實作冪集
 ### 解題策略
 
 Problem1:
@@ -36,6 +36,10 @@ Problem1:
 -----------------------------------
 Problem2:
 
+1.對第 index 個元素做二擇一：不選 / 選；用遞迴展開到尾（index==n）就輸出。
+
+2.用固定陣列裝元素與選取狀態。
+
 ## 程式實作
 
 以下為主要程式碼：
@@ -43,97 +47,114 @@ Problem2:
 Problem1:
 ```cpp
 #include <iostream>
-#include <stack>   // 非遞迴版會用到 stack
 using namespace std;
 
-/*------------------------------------------------------------
-  函式定義：Ackermann’s function A(m, n)
-  
-  數學定義：
-      A(m, n) =
-        n + 1                 , if m = 0
-        A(m - 1, 1)           , if m > 0 and n = 0
-        A(m - 1, A(m, n - 1)) , if m > 0 and n > 0
-------------------------------------------------------------*/
-
-// 🔹 遞迴版 (Recursive Version)
+// 遞迴版
 int AckermannRecursive(int m, int n) {
-    if (m == 0)
-        return n + 1;
-
-    else if (n == 0)
-        return AckermannRecursive(m - 1, 1);
-
-    else
-        return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
+    if (m == 0) return n + 1;
+    if (n == 0) return AckermannRecursive(m - 1, 1);
+    return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
 }
 
-----------------------------------------------------------------
-// 🔹 非遞迴版 (Non-recursive Version)
+// 非遞迴版
 int AckermannNonRecursive(int m, int n) {
-    stack<int> st;        // 用來記錄每次呼叫的 m 值
-    st.push(m);           // 先把初始 m 放進 stack
+    const int MAX = 200000; // 簡單界限，輸入請務必很小
+    int st[MAX];
+    int top = -1;
+    st[++top] = m;          // 初始推入 m
 
-    while (!st.empty()) {
-        m = st.top();     // 取出最上層的 m
-        st.pop();         // 彈出代表「要處理這層」
-
+    while (top >= 0) {
+        m = st[top--];      // pop
         if (m == 0) {
             n = n + 1;
-        } 
-        else if (n == 0) {
-            st.push(m - 1);  // 把下一層要算的 m 放入 stack
-            n = 1;           // 更新 n 值
-        } 
-        else {
-            // 因為要先算 A(m, n - 1)，再算外層 A(m - 1, ...)
-            st.push(m - 1);  // 外層呼叫 A(m - 1, ...)
-            st.push(m);      // 內層呼叫 A(m, n - 1)
-            n = n - 1;       // 先讓 n - 1，等內層算完再回來
+        } else if (n == 0) {
+            if (top + 1 >= MAX) return -1;  // 防溢
+            st[++top] = m - 1;
+            n = 1;
+        } else {
+            if (top + 2 >= MAX) return -1;
+            st[++top] = m - 1;
+            st[++top] = m;   // 內層：A(m, n-1)
+            n = n - 1;
         }
     }
-
-    // 當 stack 清空時，n 即為最終結果
     return n;
 }
 
-
-
-// 🔹 主程式 (Main)
 int main() {
     int m, n;
+    cout << "Ackermann A(m,n). 請輸入 m n（建議 m<=3, n<=6）：";
+    if (!(cin >> m >> n)) return 0;
 
-    cout << "Ackermann's Function A(m, n)\n";
-    cout << "請輸入 m 與 n（建議 m <= 3, n <= 5）: ";
-    cin >> m >> n;
-
-    cout << "\n=== 遞迴版 Recursive ===\n";
-    cout << "A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << endl;
-
-    cout << "\n=== 非遞迴版 Non-recursive ===\n";
-    cout << "A(" << m << "," << n << ") = " << AckermannNonRecursive(m, n) << endl;
-
-    cout << "\n⚠️ 注意：Ackermann 函數成長極快，請勿輸入太大值！\n";
+    cout << "[Recursive]   A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << "\n";
+    int ans = AckermannNonRecursive(m, n);
+    if (ans >= 0) cout << "[Nonrecursive] A(" << m << "," << n << ") = " << ans << "\n";
+    else          cout << "[Nonrecursive] 堆疊溢位（輸入太大）。\n";
     return 0;
 }
 
 ```
 Problem2:
 ```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+void PowerSetRecursive(string S[], int n, int index, bool chosen[]) {
+    if (index == n) {
+        cout << "{";
+        bool first = true;
+        for (int i = 0; i < n; ++i) {
+            if (chosen[i]) {
+                if (!first) cout << ", ";
+                cout << S[i];
+                first = false;
+            }
+        }
+        cout << "}\n";
+        return;
+    }
+    // 不選 S[index]
+    chosen[index] = false;
+    PowerSetRecursive(S, n, index + 1, chosen);
+    // 選 S[index]
+    chosen[index] = true;
+    PowerSetRecursive(S, n, index + 1, chosen);
+}
+
+int main() {
+    int n;
+    cout << "Powerset：請輸入元素個數 n：";
+    if (!(cin >> n) || n <= 0 || n > 30) return 0;
+
+    string S[30];
+    bool chosen[30];
+    for (int i = 0; i < n; ++i) chosen[i] = false;
+
+    cout << "請輸入 " << n << " 個元素（空白分隔）：";
+    for (int i = 0; i < n; ++i) cin >> S[i];
+
+    cout << "\n所有子集合（共 2^" << n << " 個）：\n";
+    PowerSetRecursive(S, n, 0, chosen);
+    return 0;
+}
 
 
 ```
 ## 效能分析
+Problem1:
+1. 時間複雜度：T(m,n)≫O(2n),O(n!),O(nn)。
+2. 空間複雜度：空間複雜度為 S(m,n)=O(depth of recursion)。
 
-1. 時間複雜度：程式的時間複雜度為 $O(\log n)$。
-2. 空間複雜度：空間複雜度為 $O(100\times \log n + \pi)$。
+Problem2:  
+1. 時間複雜度：T(n)=O(n×2n)。
+2. 空間複雜度：空間複雜度為S(n)=O(n)。
 
 ## 測試與驗證
 
 ### 測試案例
 
 | 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
-
 |----------|--------------|----------|----------|
 | 測試一   | $n = 0$      | 0        | 0        |
 | 測試二   | $n = 1$      | 1        | 1        |
