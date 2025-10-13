@@ -51,22 +51,18 @@ using namespace std;
 
 // 🔹 遞迴版 (Recursive Version)
 int AckermannRecursive(int m, int n) {
-    // 基本情況 (base case)：m == 0 時直接回傳 n + 1
     if (m == 0)
         return n + 1;
 
-    // 若 m > 0 且 n == 0，呼叫 A(m-1, 1)
     else if (n == 0)
         return AckermannRecursive(m - 1, 1);
 
-    // 一般情況：A(m-1, A(m, n-1))
     else
         return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
 }
 
-
+----------------------------------------------------------------
 // 🔹 非遞迴版 (Non-recursive Version)
-// 目標：用 stack 模擬遞迴呼叫堆疊
 int AckermannNonRecursive(int m, int n) {
     stack<int> st;        // 用來記錄每次呼叫的 m 值
     st.push(m);           // 先把初始 m 放進 stack
