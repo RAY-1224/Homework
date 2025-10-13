@@ -6,7 +6,6 @@
 
 Problem1:本題要求實作阿克曼函數分別為遞迴跟非遞迴。
 
-Problem2:本題目要求實作冪集
 ### 解題策略
 
 Problem1:
@@ -33,7 +32,71 @@ Problem1:
 
 3.每次返回時，再把它拿出來（pop）
 
------------------------------------
+## 程式實作
+
+以下為主要程式碼：
+
+
+-------------------------------
+
+## 效能分析
+Problem1:
+1. 時間複雜度：T(m,n)≫O(2n),O(n!),O(nn)。
+2. 空間複雜度：空間複雜度為 S(m,n)=O(depth of recursion)。
+
+## 測試與驗證
+
+### 測試案例
+
+| 測試案例 | 輸入參數 $(m,n)$ | 預期輸出 | 實際輸出 |
+|----------|--------------|----------|----------|
+| 測試一   | $(0,1)$      | 2        | 2        |
+| 測試二   | $(0,2)$      | 3        | 3        |
+| 測試三   | $(2,1)$      | 5        | 5        |
+| 測試四   | $(3,6)$      | 509       | 509       |
+| 測試五   | $(4,9)$     | 異常拋出 | 異常拋出 |
+
+### 編譯與執行指令
+
+```shell
+Ackermann A(m,n) 請輸入 m n(建議 m<=3,n<=6): 2 1
+[Recursive]   A(2,1)=5
+[Nonrecuresive] A(2,1)=5
+```
+
+### 結論
+
+1. 程式能正確計算 $n$ 到 $1$ 的連加總和。  
+2. 在 $n < 0$ 的情況下，程式會成功拋出異常，符合設計預期。  
+3. 測試案例涵蓋了多種邊界情況（$n = 0$、$n = 1$、$n > 1$、$n < 0$），驗證程式的正確性。
+
+## 申論及開發報告
+
+### 選擇遞迴的原因
+
+在本程式中，使用遞迴來計算連加總和的主要原因如下：
+
+Problem 1 — Ackermann’s Function
+1. **函數本身定義就是遞迴形式**  
+   本質上就是一個函數呼叫自身，因此最自然的實作方式就是遞迴
+
+2. **容易對應數學定義**  
+   用 if–else 結構即可完整反映三種情況，
+可直觀展示「遞迴的結構思考」與「終止條件」的概念。
+
+4. **遞迴的語意清楚**  
+   在程式中，每次遞迴呼叫都代表一個「子問題的解」，而最終遞迴的返回結果會逐層相加，完成整體問題的求解。  
+   這種設計簡化了邏輯，不需要額外變數來維護中間狀態。
+
+透過遞迴實作 Sigma 計算，程式邏輯簡單且易於理解，特別適合展示遞迴的核心思想。然而，遞迴會因堆疊深度受到限制，當 $n$ 值過大時，應考慮使用迭代版本來避免 Stack Overflow 問題。
+
+---------------------------------------------------------------
+## 解題說明
+
+Problem2:本題目要求實作冪集
+
+### 解題策略
+
 Problem2:
 
 1.對第 index 個元素做二擇一：不選 / 選；用遞迴展開到尾（index==n）就輸出。
@@ -44,56 +107,6 @@ Problem2:
 
 以下為主要程式碼：
 
-Problem1:
-```cpp
-#include <iostream>
-using namespace std;
-
-// 遞迴版
-int AckermannRecursive(int m, int n) {
-    if (m == 0) return n + 1;
-    if (n == 0) return AckermannRecursive(m - 1, 1);
-    return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
-}
-
-// 非遞迴版
-int AckermannNonRecursive(int m, int n) {
-    const int MAX = 200000; // 簡單界限，輸入請務必很小
-    int st[MAX];
-    int top = -1;
-    st[++top] = m;          // 初始推入 m
-
-    while (top >= 0) {
-        m = st[top--];      // pop
-        if (m == 0) {
-            n = n + 1;
-        } else if (n == 0) {
-            if (top + 1 >= MAX) return -1;  // 防溢
-            st[++top] = m - 1;
-            n = 1;
-        } else {
-            if (top + 2 >= MAX) return -1;
-            st[++top] = m - 1;
-            st[++top] = m;   // 內層：A(m, n-1)
-            n = n - 1;
-        }
-    }
-    return n;
-}
-
-int main() {
-    int m, n;
-    cout << "Ackermann A(m,n). 請輸入 m n（建議 m<=3, n<=6）：";
-    if (!(cin >> m >> n)) return 0;
-
-    cout << "[Recursive]   A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << "\n";
-    int ans = AckermannNonRecursive(m, n);
-    if (ans >= 0) cout << "[Nonrecursive] A(" << m << "," << n << ") = " << ans << "\n";
-    else          cout << "[Nonrecursive] 堆疊溢位（輸入太大）。\n";
-    return 0;
-}
-
-```
 Problem2:
 ```cpp
 #include <iostream>
@@ -142,9 +155,6 @@ int main() {
 
 ```
 ## 效能分析
-Problem1:
-1. 時間複雜度：T(m,n)≫O(2n),O(n!),O(nn)。
-2. 空間複雜度：空間複雜度為 S(m,n)=O(depth of recursion)。
 
 Problem2:  
 1. 時間複雜度：T(n)=O(n×2n)。
@@ -154,9 +164,9 @@ Problem2:
 
 ### 測試案例
 
-| 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
+| 測試案例 | 輸入參數 $(m,n)$ | 預期輸出 | 實際輸出 |
 |----------|--------------|----------|----------|
-| 測試一   | $n = 0$      | 0        | 0        |
+| 測試一   | $(0,1)$      | 2        | 2        |
 | 測試二   | $n = 1$      | 1        | 1        |
 | 測試三   | $n = 3$      | 6        | 6        |
 | 測試四   | $n = 5$      | 15       | 15       |
