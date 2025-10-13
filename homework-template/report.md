@@ -35,7 +35,54 @@ Problem1:
 ## 程式實作
 
 以下為主要程式碼：
+```cpp
+#include <iostream>
+using namespace std;
 
+// 遞迴版
+int AckermannRecursive(int m, int n) {
+    if (m == 0) return n + 1;
+    if (n == 0) return AckermannRecursive(m - 1, 1);
+    return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
+}
+
+// 非遞迴版（自製堆疊，避免使用 <stack>）
+int AckermannNonRecursive(int m, int n) {
+    const int MAX = 200000; // 簡單界限，輸入請務必很小
+    int st[MAX];
+    int top = -1;
+    st[++top] = m;          // 初始推入 m
+
+    while (top >= 0) {
+        m = st[top--];      // pop
+        if (m == 0) {
+            n = n + 1;
+        } else if (n == 0) {
+            if (top + 1 >= MAX) return -1;  // 防溢
+            st[++top] = m - 1;
+            n = 1;
+        } else {
+            if (top + 2 >= MAX) return -1;
+            st[++top] = m - 1;
+            st[++top] = m;   // 內層：A(m, n-1)
+            n = n - 1;
+        }
+    }
+    return n;
+}
+
+int main() {
+    int m, n;
+    cout << "Ackermann A(m,n). 請輸入 m n（建議 m<=3, n<=6）：";
+    if (!(cin >> m >> n)) return 0;
+
+    cout << "[Recursive]   A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << "\n";
+    int ans = AckermannNonRecursive(m, n);
+    if (ans >= 0) cout << "[Nonrecursive] A(" << m << "," << n << ") = " << ans << "\n";
+    else          cout << "[Nonrecursive] 堆疊溢位（輸入太大）。\n";
+    return 0;
+}
+```
 
 -------------------------------
 
