@@ -241,19 +241,17 @@ ex:
 
 ```cpp
 
-// 輸入多項式
 istream& operator>>(istream& is, Polynomial& poly) {
-    float coef;
-    int exp, n;
-    is >> n;  // 讀取多項式的項數
+    float coef; int exp, n;
+    is >> n;
+    poly.terms = 0;
     while (n--) {
-        is >> coef >> exp;  // 讀取每一項的系數和指數
+        is >> coef >> exp;
         poly.newTerm(coef, exp);
     }
     return is;
 }
 
-// 輸出多項式
 ostream& operator<<(ostream& os, const Polynomial& poly) {
     for (int i = 0; i < poly.terms; ++i) {
         if (i > 0) os << "+";
