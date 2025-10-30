@@ -32,51 +32,74 @@ using namespace std;
 
 class Polynomial;
 
+// Term class 用來儲存一項的係數與指數
 class Term {
     friend Polynomial;
-    friend ostream& operator<<(ostream &output, const Polynomial &Poly);
+    friend ostream& operator<<(ostream& output, const Polynomial& Poly);
 private:
-    int exp;  // 指數
-    float coef;  // 系數
+    int exp;    // 指數
+    float coef; // 係數
 };
 
+// Polynomial 類別：用動態陣列表示多項式
 class Polynomial {
 private:
-    Term *termArray;
-    int capacity;  // 容量
-    int terms;  // 已經存儲的項目數量
+    Term* termArray; // 指向 Term 陣列
+    int capacity;    // 陣列容量
+    int terms;       // 目前多項式的項數
 public:
+    // 建構子：初始化容量與項數
     Polynomial() : capacity(2), terms(0) {
-        termArray = new Term[capacity];  // 初始化
+        termArray = new Term[capacity];
     }
-    
-    ~Polynomial() {
-        delete[] termArray;  // 釋放記憶體
-    }
-    
-    Polynomial Add(const Polynomial &b);
-    Polynomial Mult(const Polynomial &b);  
-    float Eval(float x);  // 評估多項式
 
-    void newTerm(const float newcoef, const int newexp);  // 新增項目
-    
-    friend istream& operator>>(istream &input, Polynomial &Poly);
-    friend ostream& operator<<(ostream &output, const Polynomial &Poly);
+    // 解構子：釋放動態記憶體
+    ~Polynomial() {
+        delete[] termArray;
+    }
+
+    // 拷貝建構子：避免淺拷貝造成重複釋放
+    Polynomial(const Polynomial& other) : capacity(other.capacity), terms(other.terms) {
+        termArray = new Term[capacity];
+        for (int i = 0; i < terms; ++i) termArray[i] = other.termArray[i];
+    }
+
+    // 指派運算子：實作深拷貝
+    Polynomial& operator=(const Polynomial& other) {
+        if (this == &other) return *this;
+        Term* newArr = new Term[other.capacity];
+        for (int i = 0; i < other.terms; ++i) newArr[i] = other.termArray[i];
+        delete[] termArray;
+        termArray = newArr;
+        capacity = other.capacity;
+        terms = other.terms;
+        return *this;
+    }
+
+    // 新增新項
+    void newTerm(const float newcoef, const int newexp);
+
+    // 多項式加法
+    Polynomial Add(const Polynomial& b) const;
+
+    // 輸入與輸出運算子
+    friend istream& operator>>(istream& is, Polynomial& poly);
+    friend ostream& operator<<(ostream& os, const Polynomial& poly);
 };
 
-// 輸入多項式
+// operator>>：輸入多項式
 istream& operator>>(istream& is, Polynomial& poly) {
     float coef;
     int exp, n;
-    is >> n;  // 讀取多項式的項數
+    is >> n; // 讀取項數
     while (n--) {
-        is >> coef >> exp;  // 讀取每一項的系數和指數
+        is >> coef >> exp;
         poly.newTerm(coef, exp);
     }
     return is;
 }
 
-// 輸出多項式
+// operator<<：輸出多項式
 ostream& operator<<(ostream& os, const Polynomial& poly) {
     for (int i = 0; i < poly.terms; ++i) {
         if (i > 0) os << "+";
@@ -85,63 +108,54 @@ ostream& operator<<(ostream& os, const Polynomial& poly) {
     return os;
 }
 
-// 新增一個項到多項式中
+// Add()：兩個多項式相加
+Polynomial Polynomial::Add(const Polynomial& b) const {
+    Polynomial r;
+    int i = 0, j = 0;
+    while (i < terms && j < b.terms) {
+        if (termArray[i].exp == b.termArray[j].exp) {
+            float s = termArray[i].coef + b.termArray[j].coef;
+            if (s) r.newTerm(s, termArray[i].exp);
+            ++i; ++j;
+        }
+        else if (termArray[i].exp < b.termArray[j].exp) {
+            r.newTerm(b.termArray[j].coef, b.termArray[j].exp);
+            ++j;
+        }
+        else {
+            r.newTerm(termArray[i].coef, termArray[i].exp);
+            ++i;
+        }
+    }
+    while (i < terms) { r.newTerm(termArray[i].coef, termArray[i].exp); ++i; }
+    while (j < b.terms) { r.newTerm(b.termArray[j].coef, b.termArray[j].exp); ++j; }
+    return r;
+}
+
+// newTerm()：在多項式中新增一個項目
 void Polynomial::newTerm(const float theCoef, const int theExp) {
     if (theCoef == 0) return;
-    if (terms == capacity) {  // 容量不足時，擴展容量
+    if (terms == capacity) {
         capacity *= 2;
         Term* temp = new Term[capacity];
-        copy(termArray, termArray + terms, temp);
+        for (int i = 0; i < terms; ++i) temp[i] = termArray[i];
         delete[] termArray;
         termArray = temp;
     }
     termArray[terms].coef = theCoef;
-    termArray[terms++].exp = theExp;
-}
-
-// 多項式加法
-Polynomial Polynomial::Add(const Polynomial& b) {
-    Polynomial c;
-    int aPos = 0, bPos = 0;
-    while (aPos < terms && bPos < b.terms) {
-        if (termArray[aPos].exp == b.termArray[bPos].exp) {
-            float t = termArray[aPos].coef + b.termArray[bPos].coef;
-            if (t) c.newTerm(t, termArray[aPos].exp);
-            aPos++;
-            bPos++;
-        } else if (termArray[aPos].exp < b.termArray[bPos].exp) {
-            c.newTerm(b.termArray[bPos].coef, b.termArray[bPos].exp);
-            bPos++;
-        } else {
-            c.newTerm(termArray[aPos].coef, termArray[aPos].exp);
-            aPos++;
-        }
-    }
-    // 處理剩餘項
-    for (; aPos < terms; aPos++) {
-        c.newTerm(termArray[aPos].coef, termArray[aPos].exp);
-    }
-    for (; bPos < b.terms; bPos++) {
-        c.newTerm(b.termArray[bPos].coef, b.termArray[bPos].exp);
-    }
-    return c;
+    termArray[terms].exp = theExp;
+    ++terms;
 }
 
 int main() {
-    Polynomial poly1, poly2, result
-    cin >> poly1;
-    cin >> poly2;
-
-    result = poly1.Add(poly2);
-
-    cout << result << endl;
-
+    Polynomial a, b, c;
+    cin >> a >> b;     // 輸入兩個多項式
+    c = a.Add(b);      // 相加
+    cout << c << endl; // 輸出結果
     return 0;
 }
 
 
-
-}
 ```
 
 ## 效能分析
