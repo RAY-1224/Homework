@@ -34,7 +34,7 @@ class Polynomial;
 
 // Term class 用來儲存一項的係數與指數
 class Term {
-    friend Polynomial;
+    friend class Polynomial;  
     friend ostream& operator<<(ostream& output, const Polynomial& Poly);
 private:
     int exp;    // 指數
@@ -48,23 +48,16 @@ private:
     int capacity;    // 陣列容量
     int terms;       // 目前多項式的項數
 public:
-    // 建構子：初始化容量與項數
-    Polynomial() : capacity(2), terms(0) {
-        termArray = new Term[capacity];
-    }
+    Polynomial() : capacity(2), terms(0) { termArray = new Term[capacity]; }
+    ~Polynomial() { delete[] termArray; }
 
-    // 解構子：釋放動態記憶體
-    ~Polynomial() {
-        delete[] termArray;
-    }
-
-    // 拷貝建構子：避免淺拷貝造成重複釋放
+    // 拷貝建構子
     Polynomial(const Polynomial& other) : capacity(other.capacity), terms(other.terms) {
         termArray = new Term[capacity];
         for (int i = 0; i < terms; ++i) termArray[i] = other.termArray[i];
     }
 
-    // 指派運算子：實作深拷貝
+    // 指派運算子
     Polynomial& operator=(const Polynomial& other) {
         if (this == &other) return *this;
         Term* newArr = new Term[other.capacity];
@@ -76,25 +69,21 @@ public:
         return *this;
     }
 
-    // 新增新項
     void newTerm(const float newcoef, const int newexp);
-
-    // 多項式加法
     Polynomial Add(const Polynomial& b) const;
 
-    // 輸入與輸出運算子
     friend istream& operator>>(istream& is, Polynomial& poly);
     friend ostream& operator<<(ostream& os, const Polynomial& poly);
 };
 
 // operator>>：輸入多項式
 istream& operator>>(istream& is, Polynomial& poly) {
-    float coef;
-    int exp, n;
-    is >> n; // 讀取項數
+    float coef; int exp, n;
+    is >> n;
+    poly.terms = 0;                 // ★ 清空舊內容
     while (n--) {
         is >> coef >> exp;
-        poly.newTerm(coef, exp);
+        poly.newTerm(coef, exp);    // 請給降冪輸入
     }
     return is;
 }
@@ -108,7 +97,7 @@ ostream& operator<<(ostream& os, const Polynomial& poly) {
     return os;
 }
 
-// Add()：兩個多項式相加
+// Add()：兩個多項式相加（假設兩邊皆降冪）
 Polynomial Polynomial::Add(const Polynomial& b) const {
     Polynomial r;
     int i = 0, j = 0;
@@ -132,7 +121,7 @@ Polynomial Polynomial::Add(const Polynomial& b) const {
     return r;
 }
 
-// newTerm()：在多項式中新增一個項目
+// newTerm()：append（不排序）
 void Polynomial::newTerm(const float theCoef, const int theExp) {
     if (theCoef == 0) return;
     if (terms == capacity) {
@@ -149,9 +138,9 @@ void Polynomial::newTerm(const float theCoef, const int theExp) {
 
 int main() {
     Polynomial a, b, c;
-    cin >> a >> b;     // 輸入兩個多項式
-    c = a.Add(b);      // 相加
-    cout << c << endl; // 輸出結果
+    cin >> a >> b;
+    c = a.Add(b);
+    cout << c << endl;
     return 0;
 }
 
@@ -196,9 +185,7 @@ int main() {
 ### 編譯與執行指令
 
 ```shell
-$ g++ -std=c++17 -o sigma sigma.cpp
-$ ./sigma
-6
+C:\Users\user\source\repos\Polynomial\x64\Debug\Polynomial.exe
 ```
 
 ### 結論
@@ -300,9 +287,7 @@ ostream& operator<<(ostream& os, const Polynomial& poly) {
 ### 編譯與執行指令
 
 ```shell
-$ g++ -std=c++17 -o sigma sigma.cpp
-$ ./sigma
-6
+C:\Users\user\source\repos\Polynomial\x64\Debug\Polynomial.exe
 ```
 
 ### 結論
