@@ -3,32 +3,28 @@ using namespace std;
 
 class Polynomial;
 
-// Term class 用來儲存一項的係數與指數
 class Term {
-    friend class Polynomial;  // ★ 修正：friend class
+    friend class Polynomial;
     friend ostream& operator<<(ostream& output, const Polynomial& Poly);
 private:
-    int exp;    // 指數
-    float coef; // 係數
+    int exp;
+    float coef;
 };
 
-// Polynomial 類別：用動態陣列表示多項式
 class Polynomial {
 private:
-    Term* termArray; // 指向 Term 陣列
-    int capacity;    // 陣列容量
-    int terms;       // 目前多項式的項數
+    Term* termArray;
+    int capacity;
+    int terms;
 public:
     Polynomial() : capacity(2), terms(0) { termArray = new Term[capacity]; }
     ~Polynomial() { delete[] termArray; }
 
-    // 拷貝建構子
     Polynomial(const Polynomial& other) : capacity(other.capacity), terms(other.terms) {
         termArray = new Term[capacity];
         for (int i = 0; i < terms; ++i) termArray[i] = other.termArray[i];
     }
 
-    // 指派運算子
     Polynomial& operator=(const Polynomial& other) {
         if (this == &other) return *this;
         Term* newArr = new Term[other.capacity];
@@ -47,19 +43,17 @@ public:
     friend ostream& operator<<(ostream& os, const Polynomial& poly);
 };
 
-// operator>>：輸入多項式
 istream& operator>>(istream& is, Polynomial& poly) {
     float coef; int exp, n;
     is >> n;
-    poly.terms = 0;                 // ★ 清空舊內容
+    poly.terms = 0;
     while (n--) {
         is >> coef >> exp;
-        poly.newTerm(coef, exp);    // 請給降冪輸入
+        poly.newTerm(coef, exp);
     }
     return is;
 }
 
-// operator<<：輸出多項式
 ostream& operator<<(ostream& os, const Polynomial& poly) {
     for (int i = 0; i < poly.terms; ++i) {
         if (i > 0) os << "+";
@@ -68,7 +62,6 @@ ostream& operator<<(ostream& os, const Polynomial& poly) {
     return os;
 }
 
-// Add()：兩個多項式相加（假設兩邊皆降冪）
 Polynomial Polynomial::Add(const Polynomial& b) const {
     Polynomial r;
     int i = 0, j = 0;
@@ -92,7 +85,6 @@ Polynomial Polynomial::Add(const Polynomial& b) const {
     return r;
 }
 
-// newTerm()：append（不排序）
 void Polynomial::newTerm(const float theCoef, const int theExp) {
     if (theCoef == 0) return;
     if (terms == capacity) {
