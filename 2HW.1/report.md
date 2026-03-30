@@ -4,82 +4,184 @@
 
 ## 解題說明
 
-Problem1:本題要求實作阿克曼函數分別為遞迴跟非遞迴。
+Q1:本題先定義抽象類別 MinPQ，其中包含最小優先佇列的基本操作：IsEmpty()、Top()、Push() 與 Pop()。
+接著實作 MinHeap 類別並繼承 MinPQ，使用陣列表示完全二元樹來建立最小堆積
 
 ### 解題策略
 
-Problem1:
+抽象類別 MinPQ 定義操作介面
 
-遞迴版:
+類別 MinHeap 繼承並實作
 
-1.每次呼叫 A(m, n) 會再呼叫自己：
-若 m = 0 → 直接回傳 n + 1
+採用:Binary Heap
+1.可用陣列實作
+2.操作效率佳
 
-若 n = 0 → 呼叫 A(m – 1, 1)
+Heap 性質:父節點 ≤ 子節點
 
-其他情況 → 呼叫 A(m – 1, A(m, n – 1))
-
-重點:內層A(m, n – 1)要先算，再代回外層計算。
-
-2. 終止條件:
-當 m = 0 時停止。
-
-非遞迴版:
-
-1.用一個 stack <int> 來代替系統的呼叫堆疊。
-
-2.每次遞迴時，把 m「暫存」進堆疊裡。
-
-3.每次返回時，再把它拿出來（pop）
 
 ## 程式實作
 
 以下為主要程式碼：
 ```cpp
 #include <iostream>
+#include <stdexcept>
 using namespace std;
 
-// 遞迴版
-int AckermannRecursive(int m, int n) {
-    if (m == 0) return n + 1;
-    if (n == 0) return AckermannRecursive(m - 1, 1);
-    return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
-}
+// 抽象資料型態：最小優先佇列（Min Priority Queue）
+template <class T>
+class MinPQ {
+public:
+    virtual ~MinPQ() {}  // 虛擬解構子
 
-// 非遞迴版（自製堆疊，避免使用 <stack>）
-int AckermannNonRecursive(int m, int n) {
-    const int MAX = 200000; // 簡單界限，輸入請務必很小
-    int st[MAX];
-    int top = -1;
-    st[++top] = m;          // 初始推入 m
+    // 判斷是否為空
+    virtual bool IsEmpty() const = 0;
 
-    while (top >= 0) {
-        m = st[top--];      // pop
-        if (m == 0) {
-            n = n + 1;
-        } else if (n == 0) {
-            if (top + 1 >= MAX) return -1;  // 防溢
-            st[++top] = m - 1;
-            n = 1;
-        } else {
-            if (top + 2 >= MAX) return -1;
-            st[++top] = m - 1;
-            st[++top] = m;   // 內層：A(m, n-1)
-            n = n - 1;
+    // 取得最小元素（回傳參考）
+    virtual const T& Top() const = 0;
+
+    // 插入元素
+    virtual void Push(const T& x) = 0;
+
+    // 刪除最小元素
+    virtual void Pop() = 0;
+};
+
+// MinHeap 類別，繼承 MinPQ
+template <class T>
+class MinHeap : public MinPQ<T> {
+private:
+    T* heap;          // 儲存 heap 的陣列
+    int capacity;     // 最大容量
+    int heapSize;     // 目前元素數量
+
+    // 當容量不足時，擴充陣列大小（倍增）
+    void Resize() {
+        int newCapacity = capacity * 2;
+        T* newHeap = new T[newCapacity + 1];
+
+        // 複製原本資料到新陣列
+        for (int i = 1; i <= heapSize; i++) {
+            newHeap[i] = heap[i];
         }
+
+        delete[] heap;
+        heap = newHeap;
+        capacity = newCapacity;
     }
-    return n;
-}
 
+public:
+    // 建構子
+    MinHeap(int theCapacity = 10) {
+        capacity = theCapacity;
+        heapSize = 0;
+        heap = new T[capacity + 1];  // index 從 1 開始使用
+    }
+
+    // 解構子
+    ~MinHeap() {
+        delete[] heap;
+    }
+
+    // 判斷 heap 是否為空
+    bool IsEmpty() const override {
+        return heapSize == 0;
+    }
+
+    // 回傳最小值（位於根節點）
+    const T& Top() const override {
+        if (IsEmpty()) {
+            throw runtime_error("Heap 是空的");
+        }
+        return heap[1];
+    }
+
+    // 插入元素（維持 Min Heap 性質）
+    void Push(const T& x) override {
+        // 若容量不足，進行擴充
+        if (heapSize == capacity) {
+            Resize();
+        }
+
+        int i = ++heapSize;
+
+        // 向上調整（Percolate Up）
+        // 若新元素比父節點小，就往上移動
+        while (i != 1 && x < heap[i / 2]) {
+            heap[i] = heap[i / 2];
+            i /= 2;
+        }
+
+        heap[i] = x;
+    }
+
+    // 刪除最小元素（根節點）
+    void Pop() override {
+        if (IsEmpty()) {
+            throw runtime_error("Heap 是空的");
+        }
+
+        // 取出最後一個元素
+        T lastElement = heap[heapSize--];
+
+        int parent = 1;
+        int child = 2;
+
+        // 向下調整（Percolate Down）
+        while (child <= heapSize) {
+            // 找出較小的子節點
+            if (child < heapSize && heap[child + 1] < heap[child]) {
+                child++;
+            }
+
+            // 若已符合 heap 性質，停止
+            if (lastElement <= heap[child]) {
+                break;
+            }
+
+            // 將較小子節點往上移
+            heap[parent] = heap[child];
+            parent = child;
+            child *= 2;
+        }
+
+        // 放入最後元素
+        heap[parent] = lastElement;
+    }
+
+    // 印出 heap 內容（測試用）
+    void PrintHeap() const {
+        for (int i = 1; i <= heapSize; i++) {
+            cout << heap[i] << " ";
+        }
+        cout << endl;
+    }
+};
+
+// 測試主程式
 int main() {
-    int m, n;
-    cout << "Ackermann A(m,n). 請輸入 m n（建議 m<=3, n<=6）：";
-    if (!(cin >> m >> n)) return 0;
+    MinHeap<int> h;
 
-    cout << "[Recursive]   A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << "\n";
-    int ans = AckermannNonRecursive(m, n);
-    if (ans >= 0) cout << "[Nonrecursive] A(" << m << "," << n << ") = " << ans << "\n";
-    else          cout << "[Nonrecursive] 堆疊溢位（輸入太大）。\n";
+    // 插入元素
+    h.Push(20);
+    h.Push(15);
+    h.Push(30);
+    h.Push(5);
+    h.Push(10);
+    h.Push(12);
+
+    cout << "Heap 內容: ";
+    h.PrintHeap();
+
+    cout << "最小值 = " << h.Top() << endl;
+
+    // 刪除最小值
+    h.Pop();
+    cout << "刪除後: ";
+    h.PrintHeap();
+
+    cout << "新的最小值 = " << h.Top() << endl;
+
     return 0;
 }
 ```
@@ -87,21 +189,31 @@ int main() {
 -------------------------------
 
 ## 效能分析
-Problem1:
-1. 時間複雜度：T(m,n)≫O(2n),O(n!),O(nn)。
-2. 空間複雜度：空間複雜度為 S(m,n)=O(depth of recursion)。
+Q1:
+| 函式 | 時間複雜度 | 空間複雜度 |
+|----------|--------------|----------|
+| IsEmpty() | O(1)     | O(1)       |
+| Top()     | O(1)     | O(1)       |
+| Push()    | O(log n) | O(1)       |
+| Pop()     | O(log n) | O(1)       |
+| Resize()  | O(n)     | O(n)       |
 
 ## 測試與驗證
 
 ### 測試案例
 
-| 測試案例 | 輸入參數 $(m,n)$ | 預期輸出 | 實際輸出 |
+| 測試案例 | 輸入參數  | 輸出(Heap內容) | 說明 |
 |----------|--------------|----------|----------|
-| 測試一   | $(0,1)$      | 2        | 2        |
-| 測試二   | $(0,2)$      | 3        | 3        |
-| 測試三   | $(2,1)$      | 5        | 5        |
-| 測試四   | $(3,6)$      | 509       | 509       |
-| 測試五   | $(4,9)$     | 異常拋出 | 異常拋出 |
+|測試一     | Push(20)     | 20               | 第一個元素         |
+|          | Push(15)     | 15 20             | 15 < 20 → 上浮     |
+|          | Push(30)     | 15 20 30          | 符合 heap          |
+|          | Push(5)      | 5 15 30 20        | 5 一路上浮到 root   |
+|          | Push(10)     | 5 10 30 20 15     | 10 上浮          |
+|          | Push(12)     | 5 10 12 30 20 15  | 調整完成      |
+|          | Top()        | 5                 | 最小值 |
+|          | Pop()        | 10 15 12 20 30    | 10 上浮 |
+|          | Top()        | 10 | 新最小值 |
+
 
 ### 編譯與執行指令
 
