@@ -255,61 +255,237 @@ Q1:
 ## 解題說明
 
 Q2:
+使用 Binary Search Tree (BST) 作為資料結構
+
+每次產生一個亂數，插入 BST
+
+插入完成後，使用遞迴函式計算樹高
+
+再用數學函式算出 log2(n)
+
+計算比值 height / log2(n)
 
 ### 解題策略
 
-Problem2:
+BST 刪除分成 3 種情況：
+1. 刪除葉節點
+   
+    直接刪除即可
+   
+2. 刪除只有一個子節點的節點
 
-1.對第 index 個元素做二擇一：不選 / 選；用遞迴展開到尾（index==n）就輸出。
+    讓父節點直接接到該子節點
+   
+3. 刪除有兩個子節點的節點
 
-2.用固定陣列裝元素與選取狀態。
+    找右子樹最小值（或左子樹最大值）
+   
+    用它取代目前節點
+   
+    再刪掉那個替代節點
+   
 
 ## 程式實作
 
 以下為主要程式碼：
 
-Problem2:
+Q2:
 ```cpp
 #include <iostream>
-#include <string>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <vector>
+#include <iomanip>
 using namespace std;
 
-void PowerSetRecursive(string S[], int n, int index, bool chosen[]) {
-    if (index == n) {
-        cout << "{";
-        bool first = true;
-        for (int i = 0; i < n; ++i) {
-            if (chosen[i]) {
-                if (!first) cout << ", ";
-                cout << S[i];
-                first = false;
-            }
-        }
-        cout << "}\n";
-        return;
+// BST 節點
+struct TreeNode {
+    int key;
+    TreeNode* left;
+    TreeNode* right;
+
+    TreeNode(int k) : key(k), left(nullptr), right(nullptr) {}
+};
+
+// Binary Search Tree 類別
+class BST {
+private:
+    TreeNode* root;
+
+    // 遞迴插入
+    TreeNode* Insert(TreeNode* node, int key) {
+        if (node == nullptr)
+            return new TreeNode(key);
+
+        if (key < node->key)
+            node->left = Insert(node->left, key);
+        else if (key > node->key)
+            node->right = Insert(node->right, key);
+
+        // 若 key 重複，這裡選擇忽略不插入
+        return node;
     }
-    // 不選 S[index]
-    chosen[index] = false;
-    PowerSetRecursive(S, n, index + 1, chosen);
-    // 選 S[index]
-    chosen[index] = true;
-    PowerSetRecursive(S, n, index + 1, chosen);
+
+    // 遞迴計算高度
+    int Height(TreeNode* node) const {
+        if (node == nullptr)
+            return 0;
+
+        int leftHeight = Height(node->left);
+        int rightHeight = Height(node->right);
+
+        return max(leftHeight, rightHeight) + 1;
+    }
+
+    // 找最小值節點（給刪除使用）
+    TreeNode* FindMin(TreeNode* node) {
+        while (node && node->left != nullptr)
+            node = node->left;
+        return node;
+    }
+
+    // 遞迴刪除
+    TreeNode* DeleteNode(TreeNode* node, int key) {
+        if (node == nullptr)
+            return nullptr;
+
+        if (key < node->key) {
+            node->left = DeleteNode(node->left, key);
+        }
+        else if (key > node->key) {
+            node->right = DeleteNode(node->right, key);
+        }
+        else {
+            // 找到要刪除的節點
+
+            // 情況 1：沒有左子樹
+            if (node->left == nullptr) {
+                TreeNode* temp = node->right;
+                delete node;
+                return temp;
+            }
+
+            // 情況 2：沒有右子樹
+            if (node->right == nullptr) {
+                TreeNode* temp = node->left;
+                delete node;
+                return temp;
+            }
+
+            // 情況 3：左右子樹都存在
+            TreeNode* temp = FindMin(node->right);
+            node->key = temp->key;
+            node->right = DeleteNode(node->right, temp->key);
+        }
+
+        return node;
+    }
+
+    // 中序走訪（測試用）
+    void Inorder(TreeNode* node) const {
+        if (node == nullptr)
+            return;
+
+        Inorder(node->left);
+        cout << node->key << " ";
+        Inorder(node->right);
+    }
+
+    // 釋放記憶體
+    void Clear(TreeNode* node) {
+        if (node == nullptr)
+            return;
+
+        Clear(node->left);
+        Clear(node->right);
+        delete node;
+    }
+
+public:
+    BST() : root(nullptr) {}
+
+    ~BST() {
+        Clear(root);
+    }
+
+    void Insert(int key) {
+        root = Insert(root, key);
+    }
+
+    void Delete(int key) {
+        root = DeleteNode(root, key);
+    }
+
+    int Height() const {
+        return Height(root);
+    }
+
+    void PrintInorder() const {
+        Inorder(root);
+        cout << endl;
+    }
+};
+
+// 題目 (a) 實驗函式
+void ExperimentBSTHeight() {
+    vector<int> testN = {100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
+
+    cout << "n\tHeight\tlog2(n)\t\tHeight/log2(n)" << endl;
+    cout << "--------------------------------------------------------" << endl;
+
+    for (int n : testN) {
+        BST tree;
+
+        for (int i = 0; i < n; i++) {
+            int value = rand() % 100000 + 1;
+            tree.Insert(value);
+        }
+
+        int height = tree.Height();
+        double logValue = log2((double)n);
+        double ratio = height / logValue;
+
+        cout << n << "\t"
+             << height << "\t"
+             << fixed << setprecision(4) << logValue << "\t\t"
+             << fixed << setprecision(4) << ratio << endl;
+    }
+}
+
+// 題目 (b) 測試刪除函式
+void TestDelete() {
+    BST tree;
+
+    int values[] = {50, 30, 70, 20, 40, 60, 80};
+    for (int x : values)
+        tree.Insert(x);
+
+    cout << "\n原本 BST 的中序結果：" << endl;
+    tree.PrintInorder();
+
+    cout << "刪除 20（葉節點）後：" << endl;
+    tree.Delete(20);
+    tree.PrintInorder();
+
+    cout << "刪除 30（只有一個子節點）後：" << endl;
+    tree.Delete(30);
+    tree.PrintInorder();
+
+    cout << "刪除 50（有兩個子節點）後：" << endl;
+    tree.Delete(50);
+    tree.PrintInorder();
 }
 
 int main() {
-    int n;
-    cout << "Powerset：請輸入元素個數 n：";
-    if (!(cin >> n) || n <= 0 || n > 30) return 0;
+    srand((unsigned)time(nullptr));
 
-    string S[30];
-    bool chosen[30];
-    for (int i = 0; i < n; ++i) chosen[i] = false;
+    cout << "===== (a) BST Height Experiment =====" << endl;
+    ExperimentBSTHeight();
 
-    cout << "請輸入 " << n << " 個元素（空白分隔）：";
-    for (int i = 0; i < n; ++i) cin >> S[i];
+    cout << "\n===== (b) BST Delete Test =====" << endl;
+    TestDelete();
 
-    cout << "\n所有子集合（共 2^" << n << " 個）：\n";
-    PowerSetRecursive(S, n, 0, chosen);
     return 0;
 }
 
@@ -317,9 +493,13 @@ int main() {
 ```
 ## 效能分析
 
-Problem2:  
-1. 時間複雜度：T(n)=O(n×2^n)。
-2. 空間複雜度：空間複雜度為S(n)=O(n)。
+Q2:  
+| 項目 | 時間複雜度  | 空間複雜度    |
+|----------|--------------|----------|
+| 單次 Insert   | $n = 1$      |    a    |
+| 插入 n 次   | $n = 2$      |     AＢ   |
+| Height   | $n = 3$      |      １　２　３   |
+| Delete   | $n = 5$      |    Ａ B c d e   |
 
 ## 測試與驗證
 
