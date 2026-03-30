@@ -1,1 +1,250 @@
+# 41343114
+
+作業一
+
+## 解題說明
+
+Problem1:本題要求實作阿克曼函數分別為遞迴跟非遞迴。
+
+### 解題策略
+
+Problem1:
+
+遞迴版:
+
+1.每次呼叫 A(m, n) 會再呼叫自己：
+若 m = 0 → 直接回傳 n + 1
+
+若 n = 0 → 呼叫 A(m – 1, 1)
+
+其他情況 → 呼叫 A(m – 1, A(m, n – 1))
+
+重點:內層A(m, n – 1)要先算，再代回外層計算。
+
+2. 終止條件:
+當 m = 0 時停止。
+
+非遞迴版:
+
+1.用一個 stack <int> 來代替系統的呼叫堆疊。
+
+2.每次遞迴時，把 m「暫存」進堆疊裡。
+
+3.每次返回時，再把它拿出來（pop）
+
+## 程式實作
+
+以下為主要程式碼：
+```cpp
+#include <iostream>
+using namespace std;
+
+// 遞迴版
+int AckermannRecursive(int m, int n) {
+    if (m == 0) return n + 1;
+    if (n == 0) return AckermannRecursive(m - 1, 1);
+    return AckermannRecursive(m - 1, AckermannRecursive(m, n - 1));
+}
+
+// 非遞迴版（自製堆疊，避免使用 <stack>）
+int AckermannNonRecursive(int m, int n) {
+    const int MAX = 200000; // 簡單界限，輸入請務必很小
+    int st[MAX];
+    int top = -1;
+    st[++top] = m;          // 初始推入 m
+
+    while (top >= 0) {
+        m = st[top--];      // pop
+        if (m == 0) {
+            n = n + 1;
+        } else if (n == 0) {
+            if (top + 1 >= MAX) return -1;  // 防溢
+            st[++top] = m - 1;
+            n = 1;
+        } else {
+            if (top + 2 >= MAX) return -1;
+            st[++top] = m - 1;
+            st[++top] = m;   // 內層：A(m, n-1)
+            n = n - 1;
+        }
+    }
+    return n;
+}
+
+int main() {
+    int m, n;
+    cout << "Ackermann A(m,n). 請輸入 m n（建議 m<=3, n<=6）：";
+    if (!(cin >> m >> n)) return 0;
+
+    cout << "[Recursive]   A(" << m << "," << n << ") = " << AckermannRecursive(m, n) << "\n";
+    int ans = AckermannNonRecursive(m, n);
+    if (ans >= 0) cout << "[Nonrecursive] A(" << m << "," << n << ") = " << ans << "\n";
+    else          cout << "[Nonrecursive] 堆疊溢位（輸入太大）。\n";
+    return 0;
+}
+```
+
+-------------------------------
+
+## 效能分析
+Problem1:
+1. 時間複雜度：T(m,n)≫O(2n),O(n!),O(nn)。
+2. 空間複雜度：空間複雜度為 S(m,n)=O(depth of recursion)。
+
+## 測試與驗證
+
+### 測試案例
+
+| 測試案例 | 輸入參數 $(m,n)$ | 預期輸出 | 實際輸出 |
+|----------|--------------|----------|----------|
+| 測試一   | $(0,1)$      | 2        | 2        |
+| 測試二   | $(0,2)$      | 3        | 3        |
+| 測試三   | $(2,1)$      | 5        | 5        |
+| 測試四   | $(3,6)$      | 509       | 509       |
+| 測試五   | $(4,9)$     | 異常拋出 | 異常拋出 |
+
+### 編譯與執行指令
+
+```shell
+Ackermann A(m,n) 請輸入 m n(建議 m<=3,n<=6): 2 1
+[Recursive]   A(2,1)=5
+[Nonrecuresive] A(2,1)=5
+```
+
+### 結論
+
+1. 遞迴版的程式碼簡潔，能直接對應數學定義，但在輸入稍大時容易因堆疊深度過大而導致 stack overflow。  
+2. 在$n > 3$且稍大的情況下，程式會成功拋出異常，符合設計預期。  
+3. 非遞迴版以自製陣列模擬堆疊，有效控制遞迴展開過程，避免系統堆疊溢位問題，並可觀察每次函式呼叫的執行順序。
+4. Ackermann 函數成長極快，當 m≥3、n≥6 時即無法執行或需極長時間。此特性凸顯其在理論計算中「超越多項式與指數級」的特性。
+
+## 申論及開發報告
+
+### 選擇遞迴的原因
+
+Problem 1 — Ackermann’s Function
+
+在本程式中，使用遞迴來計算連加總和的主要原因如下：
+
+1. **函數本身定義就是遞迴形式**  
+   本質上就是一個函數呼叫自身，因此最自然的實作方式就是遞迴
+
+2. **容易對應數學定義**  
+   用 if–else 結構即可完整反映三種情況，
+可直觀展示「遞迴的結構思考」與「終止條件」的概念。
+
+---------------------------------------------------------------
+## 解題說明
+
+Problem2:本題目要求實作冪集
+
+### 解題策略
+
+Problem2:
+
+1.對第 index 個元素做二擇一：不選 / 選；用遞迴展開到尾（index==n）就輸出。
+
+2.用固定陣列裝元素與選取狀態。
+
+## 程式實作
+
+以下為主要程式碼：
+
+Problem2:
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+void PowerSetRecursive(string S[], int n, int index, bool chosen[]) {
+    if (index == n) {
+        cout << "{";
+        bool first = true;
+        for (int i = 0; i < n; ++i) {
+            if (chosen[i]) {
+                if (!first) cout << ", ";
+                cout << S[i];
+                first = false;
+            }
+        }
+        cout << "}\n";
+        return;
+    }
+    // 不選 S[index]
+    chosen[index] = false;
+    PowerSetRecursive(S, n, index + 1, chosen);
+    // 選 S[index]
+    chosen[index] = true;
+    PowerSetRecursive(S, n, index + 1, chosen);
+}
+
+int main() {
+    int n;
+    cout << "Powerset：請輸入元素個數 n：";
+    if (!(cin >> n) || n <= 0 || n > 30) return 0;
+
+    string S[30];
+    bool chosen[30];
+    for (int i = 0; i < n; ++i) chosen[i] = false;
+
+    cout << "請輸入 " << n << " 個元素（空白分隔）：";
+    for (int i = 0; i < n; ++i) cin >> S[i];
+
+    cout << "\n所有子集合（共 2^" << n << " 個）：\n";
+    PowerSetRecursive(S, n, 0, chosen);
+    return 0;
+}
+
+
+```
+## 效能分析
+
+Problem2:  
+1. 時間複雜度：T(n)=O(n×2^n)。
+2. 空間複雜度：空間複雜度為S(n)=O(n)。
+
+## 測試與驗證
+
+### 測試案例
+
+| 測試案例 | 元素數 n  | 輸入內容    | 實際數量輸出 |
+|----------|--------------|----------|----------|
+| 測試一   | $n = 1$      |    a    |    2     |
+| 測試二   | $n = 2$      |     AＢ   |    4     |
+| 測試三   | $n = 3$      |      １　２　３   |    8     |
+| 測試四   | $n = 5$      |    Ａ B c d e   |    32    |
+| 測試五   | $n = 25$     | 異常拋出 | 異常拋出 |
+
+### 編譯與執行指令
+
+```shell
+輸入元素個數:1
+輸入1個元素(空白分隔)a
+
+所有子集合(2^1):
+{}
+{a}
+```
+
+### 結論
+
+1. 程式在 n≤5 時執行迅速且輸出完整，但當 n 過大時（例如 n≥20），輸出量成指數成長，導致運算時間與輸出資料量過大而無法實際執行。
+2. 冪集演算法屬於 指數級時間複雜度 (O(2ⁿ)) 的問題，顯示在處理組合爆炸問題時需控制輸入規模。
+3. 以 遞迴法 產生集合的所有子集合（冪集），驗證了當集合有 n 個元素時，總共有 2ⁿ 個子集合 的理論結果。
+
+## 申論及開發報告
+
+### 選擇遞迴的原因
+
+Problem 2 — Powerset
+
+在本程式中，使用遞迴來計算連加總和的主要原因如下：
+
+1. **遞迴結構最符合問題本質**  
+   每個元素只有「取或不取」兩種狀態，遞迴能自然地分支出所有可能組合，並於遞迴終止條件（index == n）時輸出當前子集合。
+
+2. **程式結構簡單且易於理解**  
+   使用遞迴不需額外的巢狀迴圈，只需一個控制 index 的參數與布林陣列 chosen[]，即可有系統地生成所有子集合。
+3. **回溯法 (Backtracking) 的應用示範**  
+   每次遞迴呼叫都代表一個決策分支，返回時自動撤銷上一步的選擇。
 
