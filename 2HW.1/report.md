@@ -556,7 +556,7 @@ C:\Users\user\source\repos\123\x64\Debug\123.exe
 
 ## 申論及開發報告
 
-### 選擇的原因
+### 選擇Binary Search Tree（BST）及的原因
 
 在本程式中，使用遞迴來計算連加總和的主要原因如下：
 
