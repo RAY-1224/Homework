@@ -1,1 +1,90 @@
+(a)
+#include <iostream>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
+// BST 節點
+struct TreeNode {
+    int key;
+    TreeNode* left;
+    TreeNode* right;
+
+    TreeNode(int k) : key(k), left(nullptr), right(nullptr) {}
+};
+
+class BST {
+private:
+    TreeNode* root;
+
+    TreeNode* Insert(TreeNode* node, int key) {
+        if (node == nullptr)
+            return new TreeNode(key);
+
+        if (key < node->key)
+            node->left = Insert(node->left, key);
+        else if (key > node->key)
+            node->right = Insert(node->right, key);
+
+        return node;
+    }
+
+    int Height(TreeNode* node) const {
+        if (node == nullptr)
+            return 0;
+
+        return max(Height(node->left), Height(node->right)) + 1;
+    }
+
+    void Clear(TreeNode* node) {
+        if (!node) return;
+        Clear(node->left);
+        Clear(node->right);
+        delete node;
+    }
+
+public:
+    BST() : root(nullptr) {}
+    ~BST() { Clear(root); }
+
+    void Insert(int key) {
+        root = Insert(root, key);
+    }
+
+    int Height() const {
+        return Height(root);
+    }
+};
+
+int main() {
+    srand((unsigned)time(nullptr));
+
+    vector<int> testN = {100, 500, 1000, 2000, 3000, 5000, 10000};
+
+    cout << "n\tHeight\tlog2(n)\t\tHeight/log2(n)\n";
+    cout << "--------------------------------------------------------\n";
+
+    for (int n : testN) {
+        BST tree;
+
+        for (int i = 0; i < n; i++) {
+            int value = rand() % 100000;
+            tree.Insert(value);
+        }
+
+        int h = tree.Height();
+        double logv = log2(n);
+        double ratio = h / logv;
+
+        cout << n << "\t"
+             << h << "\t"
+             << fixed << setprecision(4) << logv << "\t\t"
+             << ratio << endl;
+    }
+
+    return 0;
+}
 
