@@ -199,7 +199,7 @@ Q1:
 | Resize()  | O(n)     | O(n)       |
 
 ## 測試與驗證
-
+C:\Users\user\source\repos\123\x64\Debug\123.exe
 ### 測試案例
 
 | 測試案例 | 輸入參數  | 輸出(Heap內容) | 說明 |
