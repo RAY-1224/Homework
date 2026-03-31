@@ -1,1 +1,160 @@
+#include <iostream>
+#include <stdexcept>
+using namespace std;
 
+// 抽象資料型態：最小優先佇列（Min Priority Queue）
+template <class T>
+class MinPQ {
+public:
+    virtual ~MinPQ() {}  // 虛擬解構子
+
+    // 判斷是否為空
+    virtual bool IsEmpty() const = 0;
+
+    // 取得最小元素（回傳參考）
+    virtual const T& Top() const = 0;
+
+    // 插入元素
+    virtual void Push(const T& x) = 0;
+
+    // 刪除最小元素
+    virtual void Pop() = 0;
+};
+
+// MinHeap 類別，繼承 MinPQ
+template <class T>
+class MinHeap : public MinPQ<T> {
+private:
+    T* heap;          // 儲存 heap 的陣列
+    int capacity;     // 最大容量
+    int heapSize;     // 目前元素數量
+
+    // 當容量不足時，擴充陣列大小（倍增）
+    void Resize() {
+        int newCapacity = capacity * 2;
+        T* newHeap = new T[newCapacity + 1];
+
+        // 複製原本資料到新陣列
+        for (int i = 1; i <= heapSize; i++) {
+            newHeap[i] = heap[i];
+        }
+
+        delete[] heap;
+        heap = newHeap;
+        capacity = newCapacity;
+    }
+
+public:
+    // 建構子
+    MinHeap(int theCapacity = 10) {
+        capacity = theCapacity;
+        heapSize = 0;
+        heap = new T[capacity + 1];  // index 從 1 開始使用
+    }
+
+    // 解構子
+    ~MinHeap() {
+        delete[] heap;
+    }
+
+    // 判斷 heap 是否為空
+    bool IsEmpty() const override {
+        return heapSize == 0;
+    }
+
+    // 回傳最小值（位於根節點）
+    const T& Top() const override {
+        if (IsEmpty()) {
+            throw runtime_error("Heap 是空的");
+        }
+        return heap[1];
+    }
+
+    // 插入元素（維持 Min Heap 性質）
+    void Push(const T& x) override {
+        // 若容量不足，進行擴充
+        if (heapSize == capacity) {
+            Resize();
+        }
+
+        int i = ++heapSize;
+
+        // 向上調整（Percolate Up）
+        // 若新元素比父節點小，就往上移動
+        while (i != 1 && x < heap[i / 2]) {
+            heap[i] = heap[i / 2];
+            i /= 2;
+        }
+
+        heap[i] = x;
+    }
+
+    // 刪除最小元素（根節點）
+    void Pop() override {
+        if (IsEmpty()) {
+            throw runtime_error("Heap 是空的");
+        }
+
+        // 取出最後一個元素
+        T lastElement = heap[heapSize--];
+
+        int parent = 1;
+        int child = 2;
+
+        // 向下調整（Percolate Down）
+        while (child <= heapSize) {
+            // 找出較小的子節點
+            if (child < heapSize && heap[child + 1] < heap[child]) {
+                child++;
+            }
+
+            // 若已符合 heap 性質，停止
+            if (lastElement <= heap[child]) {
+                break;
+            }
+
+            // 將較小子節點往上移
+            heap[parent] = heap[child];
+            parent = child;
+            child *= 2;
+        }
+
+        // 放入最後元素
+        heap[parent] = lastElement;
+    }
+
+    // 印出 heap 內容（測試用）
+    void PrintHeap() const {
+        for (int i = 1; i <= heapSize; i++) {
+            cout << heap[i] << " ";
+        }
+        cout << endl;
+    }
+};
+
+// 測試主程式
+int main() {
+    MinHeap<int> h;
+
+    // 插入元素
+    h.Push(20);
+    h.Push(15);
+    h.Push(30);
+    h.Push(5);
+    h.Push(10);
+    h.Push(12);
+
+    cout << "Heap 內容: ";
+    h.PrintHeap();
+
+    cout << "最小值 = " << h.Top() << endl;
+
+    // 刪除最小值
+    h.Pop();
+    cout << "刪除後: ";
+    h.PrintHeap();
+
+    cout << "新的最小值 = " << h.Top() << endl;
+
+    return 0;
+}
