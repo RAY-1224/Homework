@@ -270,19 +270,19 @@ Q2:
 BST 刪除分成 3 種情況：
 1. 刪除葉節點
    
-    直接刪除即可
+     直接刪除即可
    
 2. 刪除只有一個子節點的節點
 
-    讓父節點直接接到該子節點
+     讓父節點直接接到該子節點
    
 3. 刪除有兩個子節點的節點
 
-    找右子樹最小值（或左子樹最大值）
+     找右子樹最小值（或左子樹最大值）
    
-    用它取代目前節點
+     用它取代目前節點
    
-    再刪掉那個替代節點
+     再刪掉那個替代節點
    
 
 ## 程式實作
@@ -291,6 +291,7 @@ BST 刪除分成 3 種情況：
 
 Q2:
 ```cpp
+(a)
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
@@ -308,12 +309,10 @@ struct TreeNode {
     TreeNode(int k) : key(k), left(nullptr), right(nullptr) {}
 };
 
-// Binary Search Tree 類別
 class BST {
 private:
     TreeNode* root;
 
-    // 遞迴插入
     TreeNode* Insert(TreeNode* node, int key) {
         if (node == nullptr)
             return new TreeNode(key);
@@ -323,57 +322,128 @@ private:
         else if (key > node->key)
             node->right = Insert(node->right, key);
 
-        // 若 key 重複，這裡選擇忽略不插入
         return node;
     }
 
-    // 遞迴計算高度
     int Height(TreeNode* node) const {
         if (node == nullptr)
             return 0;
 
-        int leftHeight = Height(node->left);
-        int rightHeight = Height(node->right);
-
-        return max(leftHeight, rightHeight) + 1;
+        return max(Height(node->left), Height(node->right)) + 1;
     }
 
-    // 找最小值節點（給刪除使用）
+    void Clear(TreeNode* node) {
+        if (!node) return;
+        Clear(node->left);
+        Clear(node->right);
+        delete node;
+    }
+
+public:
+    BST() : root(nullptr) {}
+    ~BST() { Clear(root); }
+
+    void Insert(int key) {
+        root = Insert(root, key);
+    }
+
+    int Height() const {
+        return Height(root);
+    }
+};
+
+int main() {
+    srand((unsigned)time(nullptr));
+
+    vector<int> testN = {100, 500, 1000, 2000, 3000, 5000, 10000};
+
+    cout << "n\tHeight\tlog2(n)\t\tHeight/log2(n)\n";
+    cout << "--------------------------------------------------------\n";
+
+    for (int n : testN) {
+        BST tree;
+
+        for (int i = 0; i < n; i++) {
+            int value = rand() % 100000;
+            tree.Insert(value);
+        }
+
+        int h = tree.Height();
+        double logv = log2(n);
+        double ratio = h / logv;
+
+        cout << n << "\t"
+             << h << "\t"
+             << fixed << setprecision(4) << logv << "\t\t"
+             << ratio << endl;
+    }
+
+    return 0;
+}
+
+```
+```cpp
+(b)
+#include <iostream>
+using namespace std;
+
+// BST 節點
+struct TreeNode {
+    int key;
+    TreeNode* left;
+    TreeNode* right;
+
+    TreeNode(int k) : key(k), left(nullptr), right(nullptr) {}
+};
+
+class BST {
+private:
+    TreeNode* root;
+
+    TreeNode* Insert(TreeNode* node, int key) {
+        if (!node)
+            return new TreeNode(key);
+
+        if (key < node->key)
+            node->left = Insert(node->left, key);
+        else if (key > node->key)
+            node->right = Insert(node->right, key);
+
+        return node;
+    }
+
     TreeNode* FindMin(TreeNode* node) {
-        while (node && node->left != nullptr)
+        while (node && node->left)
             node = node->left;
         return node;
     }
 
-    // 遞迴刪除
     TreeNode* DeleteNode(TreeNode* node, int key) {
-        if (node == nullptr)
+        if (!node)
             return nullptr;
 
-        if (key < node->key) {
+        if (key < node->key)
             node->left = DeleteNode(node->left, key);
-        }
-        else if (key > node->key) {
+        else if (key > node->key)
             node->right = DeleteNode(node->right, key);
-        }
         else {
-            // 找到要刪除的節點
+            // 找到節點
 
-            // 情況 1：沒有左子樹
-            if (node->left == nullptr) {
+            // 無左子
+            if (!node->left) {
                 TreeNode* temp = node->right;
                 delete node;
                 return temp;
             }
 
-            // 情況 2：沒有右子樹
-            if (node->right == nullptr) {
+            // 無右子
+            if (!node->right) {
                 TreeNode* temp = node->left;
                 delete node;
                 return temp;
             }
 
-            // 情況 3：左右子樹都存在
+            // 有兩個子
             TreeNode* temp = FindMin(node->right);
             node->key = temp->key;
             node->right = DeleteNode(node->right, temp->key);
@@ -382,32 +452,15 @@ private:
         return node;
     }
 
-    // 中序走訪（測試用）
-    void Inorder(TreeNode* node) const {
-        if (node == nullptr)
-            return;
-
+    void Inorder(TreeNode* node) {
+        if (!node) return;
         Inorder(node->left);
         cout << node->key << " ";
         Inorder(node->right);
     }
 
-    // 釋放記憶體
-    void Clear(TreeNode* node) {
-        if (node == nullptr)
-            return;
-
-        Clear(node->left);
-        Clear(node->right);
-        delete node;
-    }
-
 public:
     BST() : root(nullptr) {}
-
-    ~BST() {
-        Clear(root);
-    }
 
     void Insert(int key) {
         root = Insert(root, key);
@@ -417,79 +470,37 @@ public:
         root = DeleteNode(root, key);
     }
 
-    int Height() const {
-        return Height(root);
-    }
-
-    void PrintInorder() const {
+    void Print() {
         Inorder(root);
         cout << endl;
     }
 };
 
-// 題目 (a) 實驗函式
-void ExperimentBSTHeight() {
-    vector<int> testN = {100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
-
-    cout << "n\tHeight\tlog2(n)\t\tHeight/log2(n)" << endl;
-    cout << "--------------------------------------------------------" << endl;
-
-    for (int n : testN) {
-        BST tree;
-
-        for (int i = 0; i < n; i++) {
-            int value = rand() % 100000 + 1;
-            tree.Insert(value);
-        }
-
-        int height = tree.Height();
-        double logValue = log2((double)n);
-        double ratio = height / logValue;
-
-        cout << n << "\t"
-             << height << "\t"
-             << fixed << setprecision(4) << logValue << "\t\t"
-             << fixed << setprecision(4) << ratio << endl;
-    }
-}
-
-// 題目 (b) 測試刪除函式
-void TestDelete() {
+int main() {
     BST tree;
 
-    int values[] = {50, 30, 70, 20, 40, 60, 80};
-    for (int x : values)
+    int arr[] = {50, 30, 70, 20, 40, 60, 80};
+
+    for (int x : arr)
         tree.Insert(x);
 
-    cout << "\n原本 BST 的中序結果：" << endl;
-    tree.PrintInorder();
+    cout << "原本 BST: ";
+    tree.Print();
 
-    cout << "刪除 20（葉節點）後：" << endl;
+    cout << "刪除 20: ";
     tree.Delete(20);
-    tree.PrintInorder();
+    tree.Print();
 
-    cout << "刪除 30（只有一個子節點）後：" << endl;
+    cout << "刪除 30: ";
     tree.Delete(30);
-    tree.PrintInorder();
+    tree.Print();
 
-    cout << "刪除 50（有兩個子節點）後：" << endl;
+    cout << "刪除 50: ";
     tree.Delete(50);
-    tree.PrintInorder();
-}
-
-int main() {
-    srand((unsigned)time(nullptr));
-
-    cout << "===== (a) BST Height Experiment =====" << endl;
-    ExperimentBSTHeight();
-
-    cout << "\n===== (b) BST Delete Test =====" << endl;
-    TestDelete();
+    tree.Print();
 
     return 0;
 }
-
-
 ```
 ## 效能分析
 
@@ -504,36 +515,48 @@ int main() {
 
 ### 測試案例
 
-| 測試案例 | 元素數 n  | 輸入內容    | 實際數量輸出 |
-|----------|--------------|----------|----------|
-| 測試一   | $n = 1$      |    a    |    2     |
-| 測試二   | $n = 2$      |     AＢ   |    4     |
-| 測試三   | $n = 3$      |      １　２　３   |    8     |
-| 測試四   | $n = 5$      |    Ａ B c d e   |    32    |
-| 測試五   | $n = 25$     | 異常拋出 | 異常拋出 |
+(a)
+| n     | Height | log₂(n) | Height / log₂(n) |
+| ----- | ------ | ------- | ---------------- |
+| 100   | 13     | 6.6439  | 1.9567           |
+| 500   | 19     | 8.9658  | 2.1193           |
+| 1000  | 21     | 9.9658  | 2.1072           |
+| 2000  | 23     | 10.9658 | 2.0974           |
+| 3000  | 24     | 11.5507 | 2.0778           |
+| 5000  | 26     | 12.2877 | 2.1159           |
+| 10000 | 28     | 13.2877 | 2.1079           |
+
+(b)
+| 步驟 | 操作         | 中序走訪結果（排序結果）         | 說明     |
+| -- | ---------- | -------------------- | ------ |
+| 1  | 初始 BST     | 20 30 40 50 60 70 80 | 建立完成   |
+| 2  | Delete(20) | 30 40 50 60 70 80    | 刪除葉節點  |
+| 3  | Delete(30) | 40 50 60 70 80       | 刪除單子節點 |
+| 4  | Delete(50) | 40 60 70 80          | 刪除雙子節點 |
+
 
 ### 編譯與執行指令
 
 ```shell
-輸入元素個數:1
-輸入1個元素(空白分隔)a
-
-所有子集合(2^1):
-{}
-{a}
+C:\Users\user\source\repos\123\x64\Debug\123.exe
 ```
 
 ### 結論
 
-1. 程式在 n≤5 時執行迅速且輸出完整，但當 n 過大時（例如 n≥20），輸出量成指數成長，導致運算時間與輸出資料量過大而無法實際執行。
-2. 冪集演算法屬於 指數級時間複雜度 (O(2ⁿ)) 的問題，顯示在處理組合爆炸問題時需控制輸入規模。
-3. 以 遞迴法 產生集合的所有子集合（冪集），驗證了當集合有 n 個元素時，總共有 2ⁿ 個子集合 的理論結果。
+1. 本題利用 Binary Search Tree 實作插入、高度計算與刪除操作
+2. 在隨機插入情況下，BST 的高度與 log2(n) 的比值大致接近常數
+3. 實驗結果可驗證隨機 BST 的高度成長趨勢接近 O(log n)
+4. 刪除函式依照 BST 三種刪除情況進行處理，能正確維持 BST 性質
+5. 對於刪除操作，其時間複雜度與樹高有關，為 O(h)
+6.若樹接近平衡，刪除平均可達 O(log n)
+
+這題我們用 Binary Search Tree 來做實驗，
+發現隨機插入資料時，樹的高度大致會跟 log(n) 成長，
+而且 height / log₂(n) 的比值差不多維持在 2 左右，代表效率還不錯。
 
 ## 申論及開發報告
 
-### 選擇遞迴的原因
-
-Problem 2 — Powerset
+### 選擇的原因
 
 在本程式中，使用遞迴來計算連加總和的主要原因如下：
 
