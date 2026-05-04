@@ -3,10 +3,10 @@
 資料結構(二)作業二
 
 ## 解題說明
-
+    
 本題主要實作 Graph 圖形結構，並使用 Adjacency List（鄰接串列） 作為圖的表示方法。
 
-Graph 是由 Vertex（頂點） 與 Edge（邊） 組成的資料結構，可以用來表示節點之間的關係。例如地圖路線、網路連線、社群關係、課程先修關係等，都可以使用 Graph 來表示。
+Graph 是由 Vertex（頂點） 與 Edge（邊） 組成的資料結構，可以用來表示節點之間的關係。
 
 -------------
 加權圖與無加權圖說明:
@@ -60,31 +60,40 @@ Adjacency List 表示方式：
 #include <queue>
 using namespace std;
 
-// Graph 類別
 class Graph {
 private:
-    int vertices;                  // 頂點數量
-    vector<vector<int>> adjList;    // 鄰接串列
+    int vertices;
+    vector<vector<int>> adjList;
 
 public:
-    // 建構子
     Graph(int v) {
         vertices = v;
         adjList.resize(v);
     }
 
-    // 新增邊，這裡使用無向圖
     void addEdge(int u, int v) {
         adjList[u].push_back(v);
-        adjList[v].push_back(u);
+        adjList[v].push_back(u);   // 無向圖，所以兩邊都要加入
     }
 
-    // DFS 遞迴函式
+    void PrintGraph() {
+        cout << "Adjacency List:" << endl;
+
+        for (int i = 0; i < vertices; i++) {
+            cout << i << ": ";
+
+            for (int neighbor : adjList[i]) {
+                cout << neighbor << " ";
+            }
+
+            cout << endl;
+        }
+    }
+
     void DFSUtil(int v, vector<bool>& visited) {
         visited[v] = true;
         cout << v << " ";
 
-        // 拜訪所有相鄰節點
         for (int neighbor : adjList[v]) {
             if (!visited[neighbor]) {
                 DFSUtil(neighbor, visited);
@@ -92,7 +101,6 @@ public:
         }
     }
 
-    // DFS 深度優先搜尋
     void DFS(int start) {
         vector<bool> visited(vertices, false);
 
@@ -101,7 +109,6 @@ public:
         cout << endl;
     }
 
-    // BFS 廣度優先搜尋
     void BFS(int start) {
         vector<bool> visited(vertices, false);
         queue<int> q;
@@ -117,7 +124,6 @@ public:
 
             cout << current << " ";
 
-            // 將尚未拜訪的相鄰節點加入 queue
             for (int neighbor : adjList[current]) {
                 if (!visited[neighbor]) {
                     visited[neighbor] = true;
@@ -128,43 +134,22 @@ public:
 
         cout << endl;
     }
-
-    // 印出 Adjacency List
-    void PrintGraph() {
-        cout << "Adjacency List:" << endl;
-
-        for (int i = 0; i < vertices; i++) {
-            cout << i << ": ";
-
-            for (int neighbor : adjList[i]) {
-                cout << neighbor << " ";
-            }
-
-            cout << endl;
-        }
-    }
 };
 
-// 測試主程式
 int main() {
     Graph g(6);
 
-    // 建立無向圖
     g.addEdge(0, 1);
     g.addEdge(0, 2);
     g.addEdge(1, 3);
     g.addEdge(1, 4);
     g.addEdge(2, 5);
 
-    // 印出圖形
     g.PrintGraph();
 
     cout << endl;
 
-    // 從頂點 0 開始 DFS
     g.DFS(0);
-
-    // 從頂點 0 開始 BFS
     g.BFS(0);
 
     return 0;
@@ -183,7 +168,7 @@ deg(v) = 某個頂點 v 的相鄰邊數量
 | 函式 / 項目              | 時間複雜度     | 空間複雜度    |
 | -------------------- | --------- | -------- |
 | 建立 Adjacency List    | O(V)      | O(V)     |
-| addEdge()            | O(1)      | O(1)     |
+| addEdge()            | 平均O(1)      | O(1)     |
 | 查詢某頂點所有相鄰點           | O(deg(v)) | O(1)     |
 | 查詢兩點是否相鄰             | O(deg(v)) | O(1)     |
 | PrintGraph()         | O(V + E)  | O(1)     |
@@ -209,7 +194,7 @@ deg(v) = 某個頂點 v 的相鄰邊數量
 | 1 - 4 | 1 與 4 相連 |
 | 2 - 5 | 2 與 5 相連 |
 
-圖型結構如下:
+圖形結構:
 ```
         0
       /   \
@@ -239,7 +224,7 @@ C:\Users\user\source\repos\123\x64\Debug\123.exe
 
 ### 結論
 
-1.本題利用 Adjacency List 成功建立 Graph 圖形結構。
+1.本題利用 Adjacency List 成功建立 Graph 圖形結構。本題程式採用無加權圖，若要改成加權圖，可將 Adjacency List 改為儲存相鄰頂點與權重。
 
 2.DFS 可以正確完成深度優先搜尋。
 
@@ -275,6 +260,12 @@ C:\Users\user\source\repos\123\x64\Debug\123.exe
     DFS 和 BFS 都需要不斷檢查相鄰節點。
    
     使用 Adjacency List 可以讓程式更簡潔，也能維持良好的效率。
+
+4. **Connected Components / Spanning Tree**
+
+    PPT 中也提到 Connected Components 與 Spanning Trees。Connected Components 可以透過重複呼叫 DFS 或 BFS，找出圖中所有互相連通的頂點群。
+
+    Spanning Tree 則可以由 DFS 或 BFS 走訪過程中使用到的邊形成，因此 DFS 與 BFS 不只是基本搜尋方法，也可以延伸到連通性判斷與生成樹的應用。
 
 DFS 與 BFS 比較
 | 項目     | DFS               | BFS       |
